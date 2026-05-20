@@ -40,16 +40,24 @@ app.use(
 );
 
 // =========================
-// DATABASE CONNECTION
+// SAFE MONGO CONNECTION (FIX FOR VERCEL CRASH)
 // =========================
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
+let isConnected = false;
+
+const connectDB = async () => {
+  if (isConnected) return;
+
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    isConnected = true;
     console.log("MongoDB Connected");
-  })
-  .catch((err) => {
-    console.log("MongoDB Error:", err);
-  });
+  } catch (err) {
+    console.log("MongoDB Error:", err.message);
+  }
+};
+
+// call once
+connectDB();
 
 // =========================
 // HOME ROUTE
@@ -102,12 +110,12 @@ app.use((err, req, res, next) => {
 });
 
 // =========================
-// EXPORT APP FOR VERCEL
+// EXPORT FOR VERCEL
 // =========================
 module.exports = app;
 
 // =========================
-// LOCAL SERVER
+// LOCAL SERVER ONLY
 // =========================
 if (process.env.NODE_ENV !== "production") {
   const PORT = process.env.PORT || 5000;
