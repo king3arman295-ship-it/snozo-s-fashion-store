@@ -1,39 +1,43 @@
-const express = require("express")
-const mongoose = require("mongoose")
-const cors = require("cors")
-require("dotenv").config()
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const path = require("path");
+require("dotenv").config();
 
-const app = express()
+const app = express();
 
 // =========================
 // IMPORT ROUTES
 // =========================
-const productRoutes = require("./routes/productRoutes")
-const orderRoutes = require("./routes/orderRoutes")
-const authRoutes = require("./routes/authRoutes")
-const adminRoutes = require("./routes/adminRoutes")
-const chatRoutes = require("./routes/chatRoutes")
+const productRoutes = require("./routes/productRoutes");
+const orderRoutes = require("./routes/orderRoutes");
+const authRoutes = require("./routes/authRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const chatRoutes = require("./routes/chatRoutes");
 
 // =========================
 // CORS
 // =========================
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: true,
     credentials: true
   })
-)
+);
 
 // =========================
 // BODY PARSER
 // =========================
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // =========================
-// STATIC FOLDER
+// STATIC FILES
 // =========================
-app.use("/uploads", express.static("uploads"))
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads"))
+);
 
 // =========================
 // DATABASE CONNECTION
@@ -41,52 +45,74 @@ app.use("/uploads", express.static("uploads"))
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
-    console.log("MongoDB Connected")
+    console.log("MongoDB Connected");
   })
   .catch((err) => {
-    console.log("MongoDB Error:", err)
-  })
+    console.log("MongoDB Error:", err);
+  });
 
 // =========================
 // HOME ROUTE
 // =========================
 app.get("/", (req, res) => {
-  res.send("API running...")
-})
+  res.status(200).json({
+    success: true,
+    message: "API running successfully"
+  });
+});
+
+// =========================
+// HEALTH CHECK
+// =========================
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "OK"
+  });
+});
 
 // =========================
 // API ROUTES
 // =========================
-
-// PRODUCTS
-app.use("/api/products", productRoutes)
-
-// ORDERS
-app.use("/api/orders", orderRoutes)
-
-// USER AUTH
-app.use("/api/auth", authRoutes)
-
-// ADMIN AUTH
-app.use("/api/admin", adminRoutes)
-
-// CHAT FEATURE
-app.use("/api/chat", chatRoutes)
+app.use("/api/products", productRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/chat", chatRoutes);
 
 // =========================
 // 404 ROUTE
 // =========================
 app.use((req, res) => {
   res.status(404).json({
+    success: false,
     message: "Route not found"
-  })
-})
+  });
+});
 
 // =========================
-// SERVER
+// GLOBAL ERROR HANDLER
 // =========================
-const PORT = process.env.PORT || 5000
+app.use((err, req, res, next) => {
+  console.error(err.stack);
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
-})
+  res.status(500).json({
+    success: false,
+    message: "Internal Server Error"
+  });
+});
+
+// =========================
+// EXPORT APP FOR VERCEL
+// =========================
+module.exports = app;
+
+// =========================
+// LOCAL SERVER
+// =========================
+if (process.env.NODE_ENV !== "production") {
+  const PORT = process.env.PORT || 5000;
+
+  app.listen(PORT, () => {
+    console.log(`Server running on ${PORT}`);
+  });
+}
