@@ -1,18 +1,17 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { useNavigate } from "react-router-dom"
+import { API_URL } from "../config"
 
-const API = "http://localhost:5000/api"
+const API = API_URL
 
-export default function AdminDashboard() {
+function AdminDashboard() {
 
     const navigate = useNavigate()
 
     const [products, setProducts] = useState([])
     const [orders, setOrders] = useState([])
-
     const [loading, setLoading] = useState(true)
-
     const [editId, setEditId] = useState(null)
 
     const [form, setForm] = useState({
@@ -23,9 +22,6 @@ export default function AdminDashboard() {
         image: null
     })
 
-    // =========================
-    // ANALYTICS
-    // =========================
     const [analytics, setAnalytics] = useState({
         totalOrders: 0,
         totalRevenue: 0,
@@ -33,88 +29,50 @@ export default function AdminDashboard() {
     })
 
     // =========================
-    // LOAD DATA
+    // FETCH DATA
     // =========================
     const fetchData = async () => {
-
         try {
+            const productsRes = await axios.get(`${API}/products`)
+            const ordersRes = await axios.get(`${API}/orders`)
 
-            const productsRes = await axios.get(
-                `${API}/products`
-            )
-
-            const ordersRes = await axios.get(
-                `${API}/orders`
-            )
-
-            // PRODUCTS
             setProducts(productsRes.data)
 
-            // ORDERS (NEWEST FIRST)
-            const sortedOrders =
-                ordersRes.data.reverse()
-
+            const sortedOrders = [...ordersRes.data].reverse()
             setOrders(sortedOrders)
 
-            // ANALYTICS
             setAnalytics({
-
-                totalOrders:
-                    sortedOrders.length,
-
-                totalRevenue:
-                    sortedOrders.reduce(
-
-                        (acc, order) =>
-
-                            order.status !== "Cancelled"
-                                ? acc + Number(order.totalPrice || 0)
-                                : acc,
-
-                        0
-                    ),
-
-                totalProducts:
-                    productsRes.data.length
+                totalOrders: sortedOrders.length,
+                totalRevenue: sortedOrders.reduce(
+                    (acc, order) =>
+                        order.status !== "Cancelled"
+                            ? acc + Number(order.totalPrice || 0)
+                            : acc,
+                    0
+                ),
+                totalProducts: productsRes.data.length
             })
 
         } catch (err) {
-
-            console.log(err)
-
+            console.log("Fetch error:", err.message)
         } finally {
-
             setLoading(false)
-
         }
     }
 
-    // =========================
-    // AUTO REFRESH
-    // =========================
     useEffect(() => {
-
         fetchData()
-
-        const interval = setInterval(() => {
-
-            fetchData()
-
-        }, 3000)
-
+        const interval = setInterval(fetchData, 5000)
         return () => clearInterval(interval)
-
     }, [])
 
     // =========================
-    // ADD / UPDATE PRODUCT
+    // PRODUCT ADD / UPDATE
     // =========================
     const handleSubmit = async (e) => {
-
         e.preventDefault()
 
         try {
-
             const fd = new FormData()
 
             fd.append("name", form.name)
@@ -122,45 +80,18 @@ export default function AdminDashboard() {
             fd.append("category", form.category)
             fd.append("description", form.description)
 
-            if (form.image) {
+            if (form.image) fd.append("image", form.image)
 
-                fd.append("image", form.image)
-
-            }
-
-            // UPDATE PRODUCT
             if (editId) {
-
-                await axios.put(
-                    `${API}/products/${editId}`,
-                    fd,
-                    {
-                        headers: {
-                            "Content-Type":
-                                "multipart/form-data"
-                        }
-                    }
-                )
-
+                await axios.put(`${API}/products/${editId}`, fd, {
+                    headers: { "Content-Type": "multipart/form-data" }
+                })
+            } else {
+                await axios.post(`${API}/products`, fd, {
+                    headers: { "Content-Type": "multipart/form-data" }
+                })
             }
 
-            // ADD PRODUCT
-            else {
-
-                await axios.post(
-                    `${API}/products`,
-                    fd,
-                    {
-                        headers: {
-                            "Content-Type":
-                                "multipart/form-data"
-                        }
-                    }
-                )
-
-            }
-
-            // RESET
             setForm({
                 name: "",
                 price: "",
@@ -170,15 +101,11 @@ export default function AdminDashboard() {
             })
 
             setEditId(null)
-
             fetchData()
 
         } catch (err) {
-
             console.log(err)
-
             alert("Failed to save product")
-
         }
     }
 
@@ -186,27 +113,15 @@ export default function AdminDashboard() {
     // DELETE PRODUCT
     // =========================
     const deleteProduct = async (id) => {
-
         try {
-
-            await axios.delete(
-                `${API}/products/${id}`
-            )
-
+            await axios.delete(`${API}/products/${id}`)
             fetchData()
-
         } catch (err) {
-
             console.log(err)
-
         }
     }
 
-    // =========================
-    // EDIT PRODUCT
-    // =========================
     const editProduct = (product) => {
-
         setEditId(product._id)
 
         setForm({
@@ -217,97 +132,62 @@ export default function AdminDashboard() {
             image: null
         })
 
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth"
-        })
+        window.scrollTo({ top: 0, behavior: "smooth" })
     }
 
     // =========================
-    // UPDATE ORDER STATUS
+    // ORDER STATUS UPDATE
     // =========================
-    const updateOrderStatus = async (
-        id,
-        status
-    ) => {
-
+    const updateOrderStatus = async (id, status) => {
         try {
-
-            await axios.put(
-                `${API}/orders/${id}`,
-                {
-                    status
-                }
-            )
-
+            await axios.put(`${API}/orders/${id}`, { status })
             fetchData()
-
         } catch (err) {
-
             console.log(err)
-
         }
     }
 
-    // =========================
-    // DELETE ORDER
-    // =========================
     const deleteOrder = async (id) => {
-
         try {
-
-            await axios.delete(
-                `${API}/orders/${id}`
-            )
-
+            await axios.delete(`${API}/orders/${id}`)
             fetchData()
-
         } catch (err) {
-
             console.log(err)
-
         }
     }
 
-    // =========================
-    // LOGOUT
-    // =========================
     const logout = () => {
-
         localStorage.removeItem("adminToken")
-
         navigate("/")
     }
 
     // =========================
-    // LOADING
+    // STATUS COLOR FUNCTION
     // =========================
+    const getStatusColor = (status) => {
+        switch (status) {
+            case "Confirmed": return "text-blue-400"
+            case "Shipped": return "text-indigo-400"
+            case "Delivered": return "text-green-400"
+            case "Cancelled": return "text-red-400"
+            default: return "text-yellow-400"
+        }
+    }
+
     if (loading) {
-
         return (
-
             <div className="min-h-screen bg-black text-white flex items-center justify-center">
-
                 Loading Dashboard...
-
             </div>
-
         )
     }
 
-    // =========================
-    // UI
-    // =========================
     return (
-
         <div className="min-h-screen bg-black text-white p-8">
 
             {/* HEADER */}
             <div className="flex justify-between items-center mb-8">
-
-                <h1 className="text-4xl font-bold">
-                    Admin Dashboard
-                </h1>
+                <h1 className="text-4xl font-bold">Admin Dashboard</h1>
 
                 <button
                     onClick={logout}
@@ -315,46 +195,26 @@ export default function AdminDashboard() {
                 >
                     Logout
                 </button>
-
             </div>
 
             {/* ANALYTICS */}
             <div className="grid md:grid-cols-3 gap-5 mb-10">
 
                 <div className="bg-gray-900 p-6 rounded-2xl">
-
-                    <h3 className="text-gray-400 mb-2">
-                        Total Orders
-                    </h3>
-
-                    <p className="text-4xl font-bold">
-                        {analytics.totalOrders}
-                    </p>
-
+                    <h3>Total Orders</h3>
+                    <p className="text-4xl">{analytics.totalOrders}</p>
                 </div>
 
                 <div className="bg-gray-900 p-6 rounded-2xl">
-
-                    <h3 className="text-gray-400 mb-2">
-                        Revenue
-                    </h3>
-
-                    <p className="text-4xl font-bold text-green-400">
+                    <h3>Revenue</h3>
+                    <p className="text-4xl text-green-400">
                         Rs {analytics.totalRevenue}
                     </p>
-
                 </div>
 
                 <div className="bg-gray-900 p-6 rounded-2xl">
-
-                    <h3 className="text-gray-400 mb-2">
-                        Products
-                    </h3>
-
-                    <p className="text-4xl font-bold">
-                        {analytics.totalProducts}
-                    </p>
-
+                    <h3>Products</h3>
+                    <p className="text-4xl">{analytics.totalProducts}</p>
                 </div>
 
             </div>
@@ -362,399 +222,158 @@ export default function AdminDashboard() {
             {/* PRODUCT FORM */}
             <div className="bg-gray-900 p-6 rounded-xl mb-10">
 
-                <h2 className="text-2xl font-bold mb-5">
-
-                    {editId
-                        ? "Edit Product"
-                        : "Add Product"}
-
+                <h2 className="text-2xl mb-5">
+                    {editId ? "Edit Product" : "Add Product"}
                 </h2>
 
-                <form
-                    onSubmit={handleSubmit}
-                    className="space-y-4"
-                >
+                <form onSubmit={handleSubmit} className="space-y-4">
 
-                    <input
-                        type="text"
-                        placeholder="Product Name"
-                        className="w-full p-3 rounded text-black"
+                    <input className="w-full p-3 text-black"
+                        placeholder="Name"
                         value={form.name}
-                        onChange={(e) =>
-                            setForm({
-                                ...form,
-                                name: e.target.value
-                            })
-                        }
+                        onChange={(e) => setForm({ ...form, name: e.target.value })}
                         required
                     />
 
-                    <input
-                        type="number"
+                    <input className="w-full p-3 text-black"
                         placeholder="Price"
-                        className="w-full p-3 rounded text-black"
+                        type="number"
                         value={form.price}
-                        onChange={(e) =>
-                            setForm({
-                                ...form,
-                                price: e.target.value
-                            })
-                        }
+                        onChange={(e) => setForm({ ...form, price: e.target.value })}
                         required
                     />
 
-                    <input
-                        type="text"
+                    <input className="w-full p-3 text-black"
                         placeholder="Category"
-                        className="w-full p-3 rounded text-black"
                         value={form.category}
-                        onChange={(e) =>
-                            setForm({
-                                ...form,
-                                category: e.target.value
-                            })
-                        }
+                        onChange={(e) => setForm({ ...form, category: e.target.value })}
                         required
                     />
 
-                    <textarea
+                    <textarea className="w-full p-3 text-black"
                         placeholder="Description"
-                        className="w-full p-3 rounded text-black"
                         value={form.description}
-                        onChange={(e) =>
-                            setForm({
-                                ...form,
-                                description: e.target.value
-                            })
-                        }
+                        onChange={(e) => setForm({ ...form, description: e.target.value })}
                         required
                     />
 
                     <input
                         type="file"
                         onChange={(e) =>
-                            setForm({
-                                ...form,
-                                image: e.target.files[0]
-                            })
+                            setForm({ ...form, image: e.target.files[0] })
                         }
                     />
 
-                    <div className="flex gap-3">
-
-                        <button
-                            className="bg-white text-black px-5 py-2 rounded-lg font-bold"
-                        >
-
-                            {editId
-                                ? "Update Product"
-                                : "Add Product"}
-
-                        </button>
-
-                        {editId && (
-
-                            <button
-                                type="button"
-                                onClick={() => {
-
-                                    setEditId(null)
-
-                                    setForm({
-                                        name: "",
-                                        price: "",
-                                        category: "",
-                                        description: "",
-                                        image: null
-                                    })
-                                }}
-                                className="bg-gray-600 px-5 py-2 rounded-lg"
-                            >
-                                Cancel
-                            </button>
-
-                        )}
-
-                    </div>
+                    <button className="bg-white text-black px-5 py-2 rounded">
+                        {editId ? "Update" : "Add"}
+                    </button>
 
                 </form>
-
             </div>
 
             {/* PRODUCTS */}
-            <div className="mb-12">
+            <div>
+                <h2 className="text-2xl mb-5">Products</h2>
 
-                <h2 className="text-2xl font-bold mb-5">
-                    Products
-                </h2>
+                {products.map((p) => (
+                    <div key={p._id} className="bg-gray-900 p-4 flex justify-between mb-3">
 
-                <div className="space-y-4">
+                        <div className="flex gap-4 items-center">
 
-                    {products.map((p) => (
+                            <img
+                                src={
+                                    p.image?.startsWith("http")
+                                        ? p.image
+                                        : `${API_URL}${p.image}`
+                                }
+                                className="w-20 h-20 object-cover"
+                                alt={p.name}
+                            />
 
-                        <div
-                            key={p._id}
-                            className="bg-gray-900 p-4 rounded-xl flex justify-between items-center"
-                        >
-
-                            <div className="flex gap-4 items-center">
-
-                                <img
-                                    src={`http://localhost:5000${p.image}`}
-                                    alt={p.name}
-                                    className="w-20 h-20 object-cover rounded"
-                                />
-
-                                <div>
-
-                                    <h3 className="text-xl font-semibold">
-                                        {p.name}
-                                    </h3>
-
-                                    <p className="text-gray-400">
-                                        Rs {p.price}
-                                    </p>
-
-                                    <p className="text-sm text-gray-500">
-                                        {p.category}
-                                    </p>
-
-                                </div>
-
-                            </div>
-
-                            <div className="flex gap-3">
-
-                                <button
-                                    onClick={() => editProduct(p)}
-                                    className="bg-yellow-500 px-4 py-2 rounded-lg"
-                                >
-                                    Edit
-                                </button>
-
-                                <button
-                                    onClick={() =>
-                                        deleteProduct(p._id)
-                                    }
-                                    className="bg-red-600 px-4 py-2 rounded-lg"
-                                >
-                                    Delete
-                                </button>
-
+                            <div>
+                                <h3>{p.name}</h3>
+                                <p>Rs {p.price}</p>
+                                <p>{p.category}</p>
                             </div>
 
                         </div>
 
-                    ))}
+                        <div className="flex gap-3">
 
-                </div>
+                            <button onClick={() => editProduct(p)} className="bg-yellow-500 px-3">
+                                Edit
+                            </button>
 
+                            <button onClick={() => deleteProduct(p._id)} className="bg-red-600 px-3">
+                                Delete
+                            </button>
+
+                        </div>
+
+                    </div>
+                ))}
             </div>
 
-            {/* ORDERS */}
-            <div>
+            {/* ORDERS (FIXED STATUS UI) */}
+            <div className="mt-10">
+                <h2 className="text-2xl mb-5">Orders</h2>
 
-                <h2 className="text-2xl font-bold mb-5">
-                    Orders
-                </h2>
+                {orders.map((o) => {
 
-                <div className="space-y-4">
+                    const status = o.status || "Pending"
 
-                    {orders.map((o) => (
+                    return (
+                        <div key={o._id} className="bg-gray-900 p-5 mb-3 rounded-xl">
 
-                        <div
-                            key={o._id}
-                            className="bg-gray-900 p-5 rounded-xl"
-                        >
+                            <div className="flex justify-between mb-2">
 
-                            <p>
-                                <span className="font-bold">
-                                    Customer:
+                                <div>
+                                    <p><b>{o.customerName}</b></p>
+                                    <p className="text-gray-400">{o.email}</p>
+                                </div>
+
+                                <span className={`font-bold ${getStatusColor(status)}`}>
+                                    {status}
                                 </span>
-                                {" "}
-                                {o.customerName}
-                            </p>
-
-                            <p>
-                                <span className="font-bold">
-                                    Email:
-                                </span>
-                                {" "}
-                                {o.email}
-                            </p>
-
-                            <p>
-                                <span className="font-bold">
-                                    Phone:
-                                </span>
-                                {" "}
-                                {o.phone}
-                            </p>
-
-                            <p>
-                                <span className="font-bold">
-                                    Total:
-                                </span>
-                                {" "}
-                                <span className="text-green-400">
-                                    Rs {o.totalPrice}
-                                </span>
-                            </p>
-
-                            <p>
-                                <span className="font-bold">
-                                    Payment:
-                                </span>
-                                {" "}
-                                {o.paymentMethod}
-                            </p>
-
-                            <p>
-                                <span className="font-bold">
-                                    Status:
-                                </span>
-                                {" "}
-
-                                <span
-                                    className={`font-bold
-                                        ${
-                                            o.status === "Pending"
-                                                ? "text-yellow-400"
-                                                : ""
-                                        }
-
-                                        ${
-                                            o.status === "Confirmed"
-                                                ? "text-blue-400"
-                                                : ""
-                                        }
-
-                                        ${
-                                            o.status === "Shipped"
-                                                ? "text-indigo-400"
-                                                : ""
-                                        }
-
-                                        ${
-                                            o.status === "Delivered"
-                                                ? "text-green-400"
-                                                : ""
-                                        }
-
-                                        ${
-                                            o.status === "Cancelled"
-                                                ? "text-red-400"
-                                                : ""
-                                        }
-                                    `}
-                                >
-                                    {o.status}
-                                </span>
-
-                            </p>
-
-                            {/* ITEMS */}
-                            <div className="mt-5 space-y-3">
-
-                                {o.cartItems?.map((item, index) => (
-
-                                    <div
-                                        key={index}
-                                        className="bg-black p-4 rounded-lg flex justify-between"
-                                    >
-
-                                        <div>
-
-                                            <p className="font-semibold">
-                                                {item.name}
-                                            </p>
-
-                                            <p className="text-gray-500 text-sm">
-                                                Qty: {item.quantity}
-                                            </p>
-
-                                        </div>
-
-                                        <p className="text-green-400">
-                                            Rs {item.price}
-                                        </p>
-
-                                    </div>
-
-                                ))}
 
                             </div>
 
-                            {/* BUTTONS */}
-                            <div className="flex gap-3 mt-5 flex-wrap">
+                            <p className="text-green-400 mb-3">
+                                Rs {o.totalPrice}
+                            </p>
 
-                                <button
-                                    onClick={() =>
-                                        updateOrderStatus(
-                                            o._id,
-                                            "Confirmed"
-                                        )
-                                    }
-                                    className="bg-blue-600 px-4 py-2 rounded-lg"
-                                >
+                            {/* ACTIONS */}
+                            <div className="flex gap-3 flex-wrap">
+
+                                <button onClick={() => updateOrderStatus(o._id, "Confirmed")} className="bg-blue-600 px-3 py-1 rounded">
                                     Confirm
                                 </button>
 
-                                <button
-                                    onClick={() =>
-                                        updateOrderStatus(
-                                            o._id,
-                                            "Shipped"
-                                        )
-                                    }
-                                    className="bg-indigo-600 px-4 py-2 rounded-lg"
-                                >
+                                <button onClick={() => updateOrderStatus(o._id, "Shipped")} className="bg-indigo-600 px-3 py-1 rounded">
                                     Ship
                                 </button>
 
-                                <button
-                                    onClick={() =>
-                                        updateOrderStatus(
-                                            o._id,
-                                            "Delivered"
-                                        )
-                                    }
-                                    className="bg-green-600 px-4 py-2 rounded-lg"
-                                >
+                                <button onClick={() => updateOrderStatus(o._id, "Delivered")} className="bg-green-600 px-3 py-1 rounded">
                                     Deliver
                                 </button>
 
-                                <button
-                                    onClick={() =>
-                                        updateOrderStatus(
-                                            o._id,
-                                            "Cancelled"
-                                        )
-                                    }
-                                    className="bg-orange-600 px-4 py-2 rounded-lg"
-                                >
+                                <button onClick={() => updateOrderStatus(o._id, "Cancelled")} className="bg-orange-600 px-3 py-1 rounded">
                                     Cancel
                                 </button>
 
-                                <button
-                                    onClick={() =>
-                                        deleteOrder(o._id)
-                                    }
-                                    className="bg-red-600 px-4 py-2 rounded-lg"
-                                >
+                                <button onClick={() => deleteOrder(o._id)} className="bg-red-600 px-3 py-1 rounded">
                                     Delete
                                 </button>
 
                             </div>
 
                         </div>
-
-                    ))}
-
-                </div>
-
+                    )
+                })}
             </div>
 
         </div>
     )
 }
+
+export default AdminDashboard

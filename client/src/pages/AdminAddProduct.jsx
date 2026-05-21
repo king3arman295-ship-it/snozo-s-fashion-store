@@ -1,5 +1,6 @@
 import { useState } from "react"
 import axios from "axios"
+import { API_URL } from "../config"
 
 function AdminAddProduct() {
 
@@ -13,13 +14,13 @@ function AdminAddProduct() {
   const [success, setSuccess] = useState("")
 
   const addProduct = async (e) => {
-
     e.preventDefault()
-
     setLoading(true)
+    setSuccess("")
 
     try {
 
+      // KEEP SAME STRUCTURE (no backend break)
       const productData = {
         name,
         price,
@@ -28,13 +29,15 @@ function AdminAddProduct() {
         description
       }
 
+      // ✅ FIXED API CALL (NO double /api)
       const res = await axios.post(
-        "http://localhost:5000/api/products",
+        `${API_URL}/products`,
         productData
       )
 
-      setSuccess(res.data.message)
+      setSuccess(res.data.message || "Product added successfully ✔")
 
+      // reset form
       setName("")
       setPrice("")
       setImage("")
@@ -42,18 +45,14 @@ function AdminAddProduct() {
       setDescription("")
 
     } catch (error) {
-
-      console.log(error)
-
-      setSuccess("Failed to add product")
-
+      console.log("Add product error:", error)
+      setSuccess("Failed to add product ❌")
     }
 
     setLoading(false)
   }
 
   return (
-
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-8">
 
       <div className="w-full max-w-2xl bg-gray-900 p-10 rounded-3xl border border-gray-800">
@@ -62,10 +61,7 @@ function AdminAddProduct() {
           Add Product
         </h1>
 
-        <form
-          onSubmit={addProduct}
-          className="space-y-6"
-        >
+        <form onSubmit={addProduct} className="space-y-6">
 
           <input
             type="text"
@@ -116,25 +112,19 @@ function AdminAddProduct() {
             disabled={loading}
             className="w-full bg-white text-black py-4 rounded-2xl font-bold hover:bg-gray-200 transition"
           >
-
             {loading ? "Adding Product..." : "Add Product"}
-
           </button>
 
         </form>
 
         {success && (
-
           <div className="mt-6 text-center text-green-400 text-lg font-semibold">
             {success}
           </div>
-
         )}
 
       </div>
-
     </div>
-
   )
 }
 

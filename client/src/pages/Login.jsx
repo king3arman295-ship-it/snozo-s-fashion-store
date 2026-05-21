@@ -1,6 +1,7 @@
 import { useState } from "react"
 import axios from "axios"
 import { useNavigate, Link } from "react-router-dom"
+import { API_URL } from "../config"
 
 export default function Login() {
 
@@ -11,39 +12,33 @@ export default function Login() {
   const navigate = useNavigate()
 
   const loginUser = async (e) => {
-
     e.preventDefault()
     setLoading(true)
 
     try {
-
       const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
+        `${API_URL}/auth/login`,
         { email, password }
       )
-        localStorage.setItem(
-  "user",
-  JSON.stringify(res.data.user)
-)
-      // SAVE TOKEN
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify(res.data.user)
+      )
+
       localStorage.setItem("token", res.data.token)
 
       alert("Login successful ✔")
-
       navigate("/profile")
 
     } catch (err) {
-
       alert(err.response?.data?.message || "Login failed")
-
     }
 
     setLoading(false)
-
   }
 
   return (
-
     <div className="min-h-screen bg-black text-white flex items-center justify-center">
 
       <form
@@ -85,9 +80,6 @@ export default function Login() {
         </p>
 
       </form>
-
     </div>
-
   )
-
 }

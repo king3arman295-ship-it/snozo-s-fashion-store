@@ -1,5 +1,6 @@
 import { useState } from "react"
 import axios from "axios"
+import { API_URL } from "../config"
 
 export default function TrackOrder() {
 
@@ -16,7 +17,7 @@ export default function TrackOrder() {
       setLoading(true)
 
       const res = await axios.get(
-        `http://localhost:5000/api/orders/user/${email}`
+        `${API_URL}/orders/user/${email}`
       )
 
       setOrders(res.data)
@@ -27,9 +28,7 @@ export default function TrackOrder() {
       alert("No orders found")
 
     } finally {
-
       setLoading(false)
-
     }
 
   }
@@ -57,9 +56,7 @@ export default function TrackOrder() {
           required
         />
 
-        <button
-          className="bg-white text-black px-6 py-3 rounded font-bold"
-        >
+        <button className="bg-white text-black px-6 py-3 rounded font-bold">
           {loading ? "Searching..." : "Track Orders"}
         </button>
 
@@ -79,26 +76,16 @@ export default function TrackOrder() {
 
               <div>
 
-                <p>
-                  <b>Order ID:</b> {o._id}
-                </p>
-
-                <p>
-                  <b>Total:</b> Rs {o.totalPrice}
-                </p>
-
-                <p>
-                  <b>Payment:</b> {o.paymentMethod}
-                </p>
+                <p><b>Order ID:</b> {o._id}</p>
+                <p><b>Total:</b> Rs {o.totalPrice}</p>
+                <p><b>Payment:</b> {o.paymentMethod}</p>
 
               </div>
 
               <div>
 
                 <span className="bg-green-500 px-4 py-2 rounded-full">
-
                   {o.status}
-
                 </span>
 
               </div>
@@ -112,7 +99,7 @@ export default function TrackOrder() {
                 Items
               </h3>
 
-              {o.items.map((item, index) => (
+              {o.cartItems?.map((item, index) => (
 
                 <div
                   key={index}
@@ -140,5 +127,4 @@ export default function TrackOrder() {
     </div>
 
   )
-
 }

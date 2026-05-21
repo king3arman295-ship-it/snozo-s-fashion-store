@@ -1,6 +1,7 @@
 import { useContext } from "react"
 import { WishlistContext } from "../context/WishlistContext"
 import { CartContext } from "../context/CartContext"
+import { API_URL } from "../config"
 
 export default function Wishlist() {
 
@@ -9,8 +10,7 @@ export default function Wishlist() {
     toggleWishlist
   } = useContext(WishlistContext)
 
-  const { addToCart } =
-    useContext(CartContext)
+  const { addToCart } = useContext(CartContext)
 
   return (
 
@@ -35,9 +35,11 @@ export default function Wishlist() {
               className="bg-gray-900 rounded-3xl overflow-hidden"
             >
 
+              {/* FIXED IMAGE URL */}
               <img
-                src={`http://localhost:5000/uploads/${product.image}`}
+                src={`${API_URL}${product.image}`}
                 className="w-full h-72 object-cover"
+                alt={product.name}
               />
 
               <div className="p-5">
@@ -60,9 +62,7 @@ export default function Wishlist() {
                   </button>
 
                   <button
-                    onClick={() =>
-                      toggleWishlist(product)
-                    }
+                    onClick={() => toggleWishlist(product)}
                     className="px-4 bg-red-500 rounded-xl"
                   >
                     Remove
@@ -83,5 +83,4 @@ export default function Wishlist() {
     </div>
 
   )
-
 }
