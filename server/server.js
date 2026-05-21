@@ -40,23 +40,37 @@ app.use(
 );
 
 // =========================
-// SAFE MONGO CONNECTION (FIX FOR VERCEL CRASH)
+// SAFE MONGODB CONNECTION (VERCEL FRIENDLY)
 // =========================
-let isConnected = false;
+let cached = global.mongoose;
 
-const connectDB = async () => {
-  if (isConnected) return;
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
+async function connectDB() {
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+  }
 
   try {
-    await mongoose.connect(process.env.MONGO_URI);
-    isConnected = true;
+    cached.conn = await cached.promise;
     console.log("MongoDB Connected");
   } catch (err) {
     console.log("MongoDB Error:", err.message);
   }
-};
 
-// call once
+  return cached.conn;
+}
+
+// Connect ONCE at startup (safe in Vercel)
 connectDB();
 
 // =========================
