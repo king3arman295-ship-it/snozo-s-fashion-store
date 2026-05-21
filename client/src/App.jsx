@@ -7,9 +7,9 @@ import {
   Link
 } from "react-router-dom"
 
-import Home from "./pages/Home"
-import Shop from "./pages/Shop"
-import Cart from "./pages/Cart"
+import Home from "./pages/home"
+import Shop from "./pages/shop"
+import Cart from "./pages/cart"
 import Checkout from "./pages/Checkout"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
