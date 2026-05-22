@@ -40,7 +40,7 @@ app.use(
 );
 
 // =========================
-// SAFE MONGODB CONNECTION (VERCEL FRIENDLY)
+// SAFE MONGODB CONNECTION (FIXED)
 // =========================
 let cached = global.mongoose;
 
@@ -49,29 +49,35 @@ if (!cached) {
 }
 
 async function connectDB() {
-  if (cached.conn) {
-    return cached.conn;
-  }
-
-  if (!cached.promise) {
-    cached.promise = mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
-  }
-
   try {
+    // already connected
+    if (cached.conn) {
+      return cached.conn;
+    }
+
+    // reuse existing promise
+    if (!cached.promise) {
+      cached.promise = mongoose.connect(process.env.MONGO_URI);
+    }
+
     cached.conn = await cached.promise;
+
     console.log("MongoDB Connected");
+
+    return cached.conn;
+
   } catch (err) {
     console.log("MongoDB Error:", err.message);
   }
-
-  return cached.conn;
 }
 
-// Connect ONCE at startup (safe in Vercel)
-connectDB();
+// =========================
+// DB MIDDLEWARE (IMPORTANT FIX)
+// =========================
+const ensureDB = async (req, res, next) => {
+  await connectDB();
+  next();
+};
 
 // =========================
 // HOME ROUTE
@@ -93,13 +99,13 @@ app.get("/health", (req, res) => {
 });
 
 // =========================
-// API ROUTES
+// API ROUTES (NOW SAFE)
 // =========================
-app.use("/api/products", productRoutes);
-app.use("/api/orders", orderRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/chat", chatRoutes);
+app.use("/api/products", ensureDB, productRoutes);
+app.use("/api/orders", ensureDB, orderRoutes);
+app.use("/api/auth", ensureDB, authRoutes);
+app.use("/api/admin", ensureDB, adminRoutes);
+app.use("/api/chat", ensureDB, chatRoutes);
 
 // =========================
 // 404 ROUTE
@@ -112,7 +118,7 @@ app.use((req, res) => {
 });
 
 // =========================
-// GLOBAL ERROR HANDLER
+// ERROR HANDLER
 // =========================
 app.use((err, req, res, next) => {
   console.error(err.stack);
