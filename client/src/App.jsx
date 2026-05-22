@@ -20,7 +20,6 @@ import Profile from "./pages/Profile"
 import AdminOrders from "./pages/AdminOrders"
 import AdminAddProduct from "./pages/AdminAddProduct"
 
-import AdminLogin from "./pages/AdminLogin"
 import AdminDashboard from "./pages/AdminDashboard"
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute"
 
@@ -124,8 +123,7 @@ function App() {
           path="/admin"
           element={<AdminDashboard />}
         />
-        <Route path="/admin-login" element={<AdminLogin />} />
-              
+       
 
     
       </Routes>
