@@ -23,7 +23,7 @@ export default function Home() {
             _id: "p3",
             name: "Denim Jacket",
             price: 5000,
-            image: "https://images.unsplash.com/photo-1520975682031-a2c9a4c1b5e2"
+            image: "https://unsplash.com/photos/blue-washed-jacket-hanging-on-white-door-_BDBEP0ePQc"
         }
     ]
 
