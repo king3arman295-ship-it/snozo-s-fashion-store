@@ -1,6 +1,10 @@
 import { useContext } from "react"
 import { CartContext } from "../context/CartContext"
 import { Link } from "react-router-dom"
+import jacket from "../assets/jacket.jpg"
+import hood from "../assets/hood.jpg"
+import shirt from "../assets/shirt.jpg"
+
 
 export default function Home() {
 
@@ -11,19 +15,19 @@ export default function Home() {
             _id: "p1",
             name: "Black Hoodie",
             price: 3500,
-            image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab"
+            image: hood
         },
         {
             _id: "p2",
             name: "White Essential Tee",
             price: 1200,
-            image: "https://images.unsplash.com/photo-1520975958225-5f61f2b7e7c2"
+            image: shirt
         },
         {
             _id: "p3",
             name: "Denim Jacket",
             price: 5000,
-            image: "https://unsplash.com/photos/blue-washed-jacket-hanging-on-white-door-_BDBEP0ePQc"
+            image: jacket
         }
     ]
 
