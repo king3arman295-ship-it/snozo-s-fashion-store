@@ -28,6 +28,19 @@ function ProductDetails() {
   }, [id])
 
   // =========================
+  // SAFE IMAGE HELPER
+  // =========================
+  const getImageSrc = (img) => {
+    if (!img) return "https://via.placeholder.com/500"
+
+    if (img.startsWith("http")) {
+      return img
+    }
+
+    return `${API_URL}${img}`
+  }
+
+  // =========================
   // FETCH SINGLE PRODUCT
   // =========================
   const fetchProduct = async () => {
@@ -121,7 +134,7 @@ function ProductDetails() {
         <div className="relative group">
 
           <img
-            src={`${API_URL}${product.image}`}
+            src={getImageSrc(product.image)}
             alt={product.name}
             className="rounded-3xl w-full h-[520px] object-cover shadow-2xl group-hover:scale-[1.02] transition duration-500"
           />
@@ -185,7 +198,6 @@ function ProductDetails() {
           Customer Reviews
         </h2>
 
-        {/* REVIEW FORM */}
         <form
           onSubmit={submitReview}
           className="bg-gray-900 p-6 rounded-3xl space-y-4 mb-10"
@@ -200,7 +212,7 @@ function ProductDetails() {
 
           <select
             value={rating}
-            onChange={(e) => setRating(e.target.value)}
+            onChange={(e) => setRating(Number(e.target.value))}
             className="w-full p-3 bg-black border border-gray-700 rounded-xl"
           >
             <option value={5}>5 ⭐</option>
@@ -223,7 +235,6 @@ function ProductDetails() {
 
         </form>
 
-        {/* REVIEWS LIST */}
         <div className="space-y-4">
 
           {(product.reviews || []).length === 0 ? (
@@ -266,15 +277,18 @@ function ProductDetails() {
               to={`/product/${p._id}`}
               className="bg-gray-900 rounded-2xl overflow-hidden hover:-translate-y-2 transition"
             >
+
               <img
-                src={`${API_URL}${p.image}`}
+                src={getImageSrc(p.image)}
                 className="h-52 w-full object-cover"
+                alt={p.name}
               />
 
               <div className="p-3">
                 <p className="font-bold">{p.name}</p>
                 <p className="text-green-400">Rs {p.price}</p>
               </div>
+
             </Link>
           ))}
 
